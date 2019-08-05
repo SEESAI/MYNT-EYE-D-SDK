@@ -77,6 +77,7 @@ set(JPEG_FIND_QUIET TRUE)
 include(${MYNTEYE_ROOT}/cmake/DetectJPEG.cmake)
 
 find_package(eSPDI REQUIRED)
+find_package(hdf5 CONFIG REQUIRED)
 
 # rpath
 
