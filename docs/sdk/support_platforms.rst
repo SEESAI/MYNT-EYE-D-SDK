@@ -12,9 +12,10 @@ These are the platforms that can be used:
 ::
 
    * Windows 10
-   * Ubuntu 18.04.1/16.04.6
+   * Ubuntu 18.04/16.04
    * Jetson TX1 TX2 Xavier
-   * RK3399
+   * RK3399 firefly
+   * Raspberry Pi 3B
 
 .. tip::
 

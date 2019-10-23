@@ -103,6 +103,7 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
 
   sensor_msgs::CameraInfoPtr left_info_ptr;
   sensor_msgs::CameraInfoPtr right_info_ptr;
+  sensor_msgs::CameraInfoPtr depth_info_ptr;
 
   // Launch params
 
@@ -533,6 +534,7 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
     }
     left_info_ptr = createCameraInfo(in.left);
     right_info_ptr = createCameraInfo(in.right);
+    depth_info_ptr = createCameraInfo(in.left);
 
     // motion intrinsics
     bool motion_ok;
@@ -608,7 +610,10 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
       header.frame_id = color_frame_id;
 
       auto&& msg = cv_bridge::CvImage(header, enc::BGR8, mat).toImageMsg();
-      if (info) info->header.stamp = msg->header.stamp;
+      if (info) {
+        info->header.stamp = msg->header.stamp;
+        info->header.frame_id = color_frame_id;
+      }
       pub_color.publish(msg, info);
     }
     if (mono_sub) {
@@ -637,8 +642,9 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
     header.stamp = timestamp;
     header.frame_id = depth_frame_id;
 
-    auto&& info = left_info_ptr;
+    auto&& info = depth_info_ptr;
     if (info) info->header.stamp = header.stamp;
+    if (info) info->header.frame_id = depth_frame_id;
     if (params.depth_mode == DepthMode::DEPTH_RAW) {
       auto&& mat = data.img->To(ImageFormat::DEPTH_RAW)->ToMat();
       if (depth_type == 0) {
@@ -1042,11 +1048,16 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
     mesh_msg_.header.frame_id = temp_frame_id;
     mesh_msg_.header.stamp = ros::Time::now();
     mesh_msg_.type = visualization_msgs::Marker::MESH_RESOURCE;
+
+    geometry_msgs::Quaternion q;
+    double Pie = 3.1416;
+    q = tf::createQuaternionMsgFromRollPitchYaw(Pie/2, 0.0, Pie);
+
     // fill orientation
-    mesh_msg_.pose.orientation.x = -1;
-    mesh_msg_.pose.orientation.y = 0;
-    mesh_msg_.pose.orientation.z = 0;
-    mesh_msg_.pose.orientation.w = 1;
+    mesh_msg_.pose.orientation.x = q.x;
+    mesh_msg_.pose.orientation.y = q.y;
+    mesh_msg_.pose.orientation.z = q.z;
+    mesh_msg_.pose.orientation.w = q.w;
 
     // fill position
     mesh_msg_.pose.position.x = 0;
@@ -1059,7 +1070,7 @@ class MYNTEYEWrapperNodelet : public nodelet::Nodelet {
     mesh_msg_.scale.z = 0.003;
 
     mesh_msg_.action = visualization_msgs::Marker::ADD;
-    mesh_msg_.color.a = 1.0;  // Don't forget to set the alpha!
+    mesh_msg_.color.a = 0.5;  // Don't forget to set the alpha!
     mesh_msg_.color.r = 1.0;
     mesh_msg_.color.g = 1.0;
     mesh_msg_.color.b = 1.0;
